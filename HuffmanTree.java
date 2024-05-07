@@ -1,12 +1,12 @@
 import java.util.*;
 
 public class HuffmanTree implements ITree {
-    private Node raiz;
+    private Node root;
     private Map<Character, String> huffmanCodes;
+    private Map<Character, Integer> frequencies = new HashMap<>();
 
     @Override
     public void buildTree(String text) {
-        Map<Character, Integer> frequencies = new HashMap<>();
         for (char character : text.toCharArray()) {
             frequencies.put(character, frequencies.getOrDefault(character, 0) + 1);
         }
@@ -23,9 +23,9 @@ public class HuffmanTree implements ITree {
             cola.add(padre);
         }
 
-        raiz = cola.poll();
+        root = cola.poll();
         huffmanCodes = new HashMap<>();
-        generarCodigos(raiz, "");
+        generarCodigos(root, "");
     }
 
     private void generarCodigos(Node nodo, String codigo) {
@@ -48,20 +48,44 @@ public class HuffmanTree implements ITree {
     }
 
     @Override
-    public String decode(String textCoded) {
-        StringBuilder resultado = new StringBuilder();
-        Node actual = raiz;
-        for (int i = 0; i < textCoded.length(); i++) {
-            if (textCoded.charAt(i) == '0') {
-                actual = actual.left;
-            } else {
-                actual = actual.right;
-            }
-            if (actual.left == null && actual.right == null) { // Es hoja
-                resultado.append(actual.character);
-                actual = raiz;
+    public String decode(String encodedText, int bitLength) {
+        StringBuilder result = new StringBuilder();
+        Node current = root;
+        int count = 0;
+    
+        for (int i = 0; i < bitLength; i++) {
+            current = encodedText.charAt(i) == '1' ? current.right : current.left;
+    
+            if (current.left == null && current.right == null) {
+                result.append(current.character);
+                current = root;
             }
         }
-        return resultado.toString();
+    
+        return result.toString();
+    }
+
+    @Override
+    public void buildTreeFromFrequencies(Map<Character, Integer> frequencies) {
+        PriorityQueue<Node> queue = new PriorityQueue<>();
+        for (Map.Entry<Character, Integer> entry : frequencies.entrySet()) {
+            queue.add(new Node(entry.getKey(), entry.getValue()));
+        }
+    
+        while (queue.size() > 1) {
+            Node left = queue.poll();
+            Node right = queue.poll();
+            Node parent = new Node(left, right);
+            queue.add(parent);
+        }
+    
+        this.root = queue.poll();
+        this.huffmanCodes = new HashMap<>();
+        generarCodigos(this.root, "");
+    }    
+
+    @Override
+    public Map<Character, Integer> getFrequencies() {
+        return this.frequencies; 
     }
 }
